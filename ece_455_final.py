@@ -35,6 +35,7 @@ def main():
                         'relative_deadline': relative_deadline,
                         'remaining_execution_time': execution_time,
                         'next_release_time': 0,
+                        'absolute_deadline': relative_deadline,
                         'preemption_count': 0
                     })
                 except ValueError:
@@ -50,30 +51,45 @@ def main():
         print(f"Calculated hyperperiod limit: {hyperperiod_limit}")
 
         current_time = 0
-        running_task_id = None
+        last_running_task_id = None
 
         while current_time < hyperperiod_limit:
+            for task in tasks:
+                # Check for missed deadlines
+                if current_time > task['absolute_deadline'] and task['remaining_execution_time'] > 0:
+                    print(f"Error: Task {task['id']} missed its deadline at time {current_time}")
+                    sys.exit(1)
+
+                # Update absolute deadline if a new job is released
+                if current_time >= task['next_release_time'] and task['remaining_execution_time'] == task['execution_time']:
+                    task['absolute_deadline'] = current_time + task['relative_deadline']
+            
             ready_tasks = []
             for task in tasks:
                 if current_time >= task['next_release_time'] and task['remaining_execution_time'] > 0:
                     ready_tasks.append(task)
             
             if ready_tasks:
-                # Sort by: smallest period has highest priority (Rate Monotonic)
                 ready_tasks.sort(key=lambda t: t['period'])
                 highest_priority_task = ready_tasks[0]
 
-                if running_task_id is not None and highest_priority_task['id'] != running_task_id:
-                    # Preemption occurs
-                    highest_priority_task['preemption_count'] += 1
+                if last_running_task_id is not None and highest_priority_task['id'] != last_running_task_id:
+                    # Find the task that was just preempted and increment its counter
+                    for task in tasks:
+                        if task['id'] == last_running_task_id and task['remaining_execution_time'] > 0:
+                            task['preemption_count'] += 1
+                            break
                 
-                running_task_id = highest_priority_task['id']
                 highest_priority_task['remaining_execution_time'] -= 1
+                last_running_task_id = highest_priority_task['id']
 
-                # If task finishes its current execution, reset for next release
                 if highest_priority_task['remaining_execution_time'] == 0:
                     highest_priority_task['next_release_time'] += highest_priority_task['period']
                     highest_priority_task['remaining_execution_time'] = highest_priority_task['execution_time']
+                    highest_priority_task['absolute_deadline'] = highest_priority_task['next_release_time'] + highest_priority_task['relative_deadline']
+
+            else:
+                last_running_task_id = None # No task running
 
             current_time += 1
 
