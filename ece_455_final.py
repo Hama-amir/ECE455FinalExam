@@ -94,8 +94,8 @@ def main():
             current_time += 1
 
         print("Simulation complete.")
-        for task in tasks:
-            print(f"Task {task['id']}: Preemptions = {task['preemption_count']}")
+        print(1) # Schedulable success
+        print(",".join(str(task['preemption_count']) for task in tasks)) # Comma-separated preemption counts
 
     except FileNotFoundError:
         print(f"Error: File not found at {input_filename}")
