@@ -39,8 +39,8 @@ def main():
                         'preemption_count': 0
                     })
                 except ValueError:
-                    print(f"Warning: Skipping malformed line {i+1} in {input_filename}")
-
+                    pass 
+                
         hyperperiod_limit = 1
         if tasks:
             hyperperiod_limit = tasks[0]['period']
