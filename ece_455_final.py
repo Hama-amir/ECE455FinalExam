@@ -51,15 +51,13 @@ def main():
         last_running_task_id = None
 
         while current_time < hyperperiod_limit:
-            # 1. Job Release / Replenishment Logic
             for task in tasks:
                 if current_time == task['next_release_time']:
                     task['remaining_execution_time'] = task['execution_time']
                     task['absolute_deadline'] = current_time + task['relative_deadline']
 
             for task in tasks:
-                # Check for missed deadlines
-                if current_time > task['absolute_deadline'] and task['remaining_execution_time'] > 0:
+                if task['remaining_execution_time'] > 0 and (current_time + task['remaining_execution_time'] > task['absolute_deadline']):                    
                     print("0")
                     print()  
                     sys.exit(0) 
@@ -74,7 +72,6 @@ def main():
                 highest_priority_task = ready_tasks[0]
 
                 if last_running_task_id is not None and highest_priority_task['id'] != last_running_task_id:
-                    # Find the task that was just preempted and increment its counter
                     for task in tasks:
                         if task['id'] == last_running_task_id and task['remaining_execution_time'] > 0:
                             task['preemption_count'] += 1
@@ -85,13 +82,20 @@ def main():
 
                 if highest_priority_task['remaining_execution_time'] == 0:
                     highest_priority_task['next_release_time'] += highest_priority_task['period']
+                    last_running_task_id = None  
             else:
-                last_running_task_id = None # No task running
+                last_running_task_id = None  
 
             current_time += 1
 
-        print(1) # Schedulable success
-        print(",".join(str(task['preemption_count']) for task in tasks)) # Comma-separated preemption counts
+        for task in tasks:
+            if task['next_release_time'] < hyperperiod_limit:
+                print("0")
+                print()
+                sys.exit(0)
+
+        print(1) 
+        print(",".join(str(task['preemption_count']) for task in tasks)) 
 
     except FileNotFoundError:
         print(f"Error: File not found at {input_filename}")
