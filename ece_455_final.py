@@ -40,7 +40,6 @@ def main():
                     })
                 except ValueError:
                     print(f"Warning: Skipping malformed line {i+1} in {input_filename}")
-        print(f"Successfully parsed {len(tasks)} tasks.")
 
         hyperperiod_limit = 1
         if tasks:
@@ -48,8 +47,6 @@ def main():
             for i in range(1, len(tasks)):
                 hyperperiod_limit = lcm(hyperperiod_limit, tasks[i]['period'])
         
-        print(f"Calculated hyperperiod limit: {hyperperiod_limit}")
-
         current_time = 0
         last_running_task_id = None
 
@@ -57,8 +54,9 @@ def main():
             for task in tasks:
                 # Check for missed deadlines
                 if current_time > task['absolute_deadline'] and task['remaining_execution_time'] > 0:
-                    print(f"Error: Task {task['id']} missed its deadline at time {current_time}")
-                    sys.exit(1)
+                    print("0")
+                    print()  
+                    sys.exit(0) 
 
                 # Update absolute deadline if a new job is released
                 if current_time >= task['next_release_time'] and task['remaining_execution_time'] == task['execution_time']:
@@ -93,7 +91,6 @@ def main():
 
             current_time += 1
 
-        print("Simulation complete.")
         print(1) # Schedulable success
         print(",".join(str(task['preemption_count']) for task in tasks)) # Comma-separated preemption counts
 
