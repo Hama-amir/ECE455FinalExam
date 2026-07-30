@@ -51,16 +51,18 @@ def main():
         last_running_task_id = None
 
         while current_time < hyperperiod_limit:
+            # 1. Job Release / Replenishment Logic
+            for task in tasks:
+                if current_time == task['next_release_time']:
+                    task['remaining_execution_time'] = task['execution_time']
+                    task['absolute_deadline'] = current_time + task['relative_deadline']
+
             for task in tasks:
                 # Check for missed deadlines
                 if current_time > task['absolute_deadline'] and task['remaining_execution_time'] > 0:
                     print("0")
                     print()  
                     sys.exit(0) 
-
-                # Update absolute deadline if a new job is released
-                if current_time >= task['next_release_time'] and task['remaining_execution_time'] == task['execution_time']:
-                    task['absolute_deadline'] = current_time + task['relative_deadline']
             
             ready_tasks = []
             for task in tasks:
@@ -83,9 +85,6 @@ def main():
 
                 if highest_priority_task['remaining_execution_time'] == 0:
                     highest_priority_task['next_release_time'] += highest_priority_task['period']
-                    highest_priority_task['remaining_execution_time'] = highest_priority_task['execution_time']
-                    highest_priority_task['absolute_deadline'] = highest_priority_task['next_release_time'] + highest_priority_task['relative_deadline']
-
             else:
                 last_running_task_id = None # No task running
 
