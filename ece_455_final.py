@@ -32,7 +32,10 @@ def main():
                         'id': f'T_{i}',
                         'execution_time': execution_time,
                         'period': period,
-                        'relative_deadline': relative_deadline
+                        'relative_deadline': relative_deadline,
+                        'remaining_execution_time': execution_time,
+                        'next_release_time': 0,
+                        'preemption_count': 0
                     })
                 except ValueError:
                     print(f"Warning: Skipping malformed line {i+1} in {input_filename}")
@@ -45,6 +48,38 @@ def main():
                 hyperperiod_limit = lcm(hyperperiod_limit, tasks[i]['period'])
         
         print(f"Calculated hyperperiod limit: {hyperperiod_limit}")
+
+        current_time = 0
+        running_task_id = None
+
+        while current_time < hyperperiod_limit:
+            ready_tasks = []
+            for task in tasks:
+                if current_time >= task['next_release_time'] and task['remaining_execution_time'] > 0:
+                    ready_tasks.append(task)
+            
+            if ready_tasks:
+                # Sort by: smallest period has highest priority (Rate Monotonic)
+                ready_tasks.sort(key=lambda t: t['period'])
+                highest_priority_task = ready_tasks[0]
+
+                if running_task_id is not None and highest_priority_task['id'] != running_task_id:
+                    # Preemption occurs
+                    highest_priority_task['preemption_count'] += 1
+                
+                running_task_id = highest_priority_task['id']
+                highest_priority_task['remaining_execution_time'] -= 1
+
+                # If task finishes its current execution, reset for next release
+                if highest_priority_task['remaining_execution_time'] == 0:
+                    highest_priority_task['next_release_time'] += highest_priority_task['period']
+                    highest_priority_task['remaining_execution_time'] = highest_priority_task['execution_time']
+
+            current_time += 1
+
+        print("Simulation complete.")
+        for task in tasks:
+            print(f"Task {task['id']}: Preemptions = {task['preemption_count']}")
 
     except FileNotFoundError:
         print(f"Error: File not found at {input_filename}")
